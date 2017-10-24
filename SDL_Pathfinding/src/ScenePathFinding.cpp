@@ -28,10 +28,12 @@ ScenePathFinding::ScenePathFinding()
 	coinPosition = Vector2D(-1,-1);
 	while ((!isValidCell(coinPosition)) || (Vector2D::Distance(coinPosition, rand_cell)<3)) 
 		coinPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
-	
+
 	// PathFollowing next Target
 	currentTarget = Vector2D(0, 0);
 	currentTargetIndex = -1;
+
+	//Execute the pathfinding algorithm
 
 }
 
@@ -58,7 +60,7 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 		break;
 	case SDL_MOUSEMOTION:
 	case SDL_MOUSEBUTTONDOWN:
-		if (event->button.button == SDL_BUTTON_LEFT)
+		/*if (event->button.button == SDL_BUTTON_LEFT)
 		{
 			Vector2D cell = pix2cell(Vector2D((float)(event->button.x), (float)(event->button.y)));
 			if (isValidCell(cell))
@@ -69,7 +71,7 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 
 				path.points.push_back(cell2pix(cell));
 			}
-		}
+		}*/
 		break;
 	default:
 		break;
@@ -89,12 +91,13 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 					path.points.clear();
 					currentTargetIndex = -1;
 					agents[0]->setVelocity(Vector2D(0,0));
-					// if we have arrived to the coin, replace it ina random cell!
+					// if we have arrived to the coin, replace it in a random cell!
 					if (pix2cell(agents[0]->getPosition()) == coinPosition)
 					{
 						coinPosition = Vector2D(-1, -1);
 						while ((!isValidCell(coinPosition)) || (Vector2D::Distance(coinPosition, pix2cell(agents[0]->getPosition()))<3))
 							coinPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
+						//Execute the finding algorithm again here
 					}
 				}
 				else
@@ -137,6 +140,16 @@ void ScenePathFinding::draw()
 	}
 	for (int i = 0; i < grid.size(); i++) {
 		draw_circle(TheApp::Instance()->getRenderer(), grid[i]->GetPosition().x, grid[i]->GetPosition().y, 15, 100, 100, 100, 255);
+		/*std::vector<Node*> nodeNB = grid[i]->GetNB();
+		for (int j = 0; j < nodeNB.size(); j++) {
+
+			SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), grid[i]->GetPosition().x,	grid[i]->GetPosition().y, nodeNB[j]->GetPosition().x, nodeNB[j]->GetPosition().x);
+		}*/
+	}
+	std::vector<Node*> nodeNB = grid[0]->GetNB();
+	for (int j = 0; j < nodeNB.size(); j++) {
+
+	SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), grid[0]->GetPosition().x,	grid[0]->GetPosition().y, nodeNB[j]->GetPosition().x, nodeNB[j]->GetPosition().x);
 	}
 
 
