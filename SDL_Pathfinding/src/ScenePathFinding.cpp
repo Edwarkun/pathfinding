@@ -138,19 +138,32 @@ void ScenePathFinding::draw()
 			SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), 0, j, SRC_WIDTH, j);
 		}
 	}
+	//Grid drawing
 	for (int i = 0; i < grid.size(); i++) {
 		draw_circle(TheApp::Instance()->getRenderer(), grid[i]->GetPosition().x, grid[i]->GetPosition().y, 15, 100, 100, 100, 255);
-		/*std::vector<Node*> nodeNB = grid[i]->GetNB();
+		std::vector<Node*> nodeNB = grid[i]->GetNB();
 		for (int j = 0; j < nodeNB.size(); j++) {
+			if (grid[i]->GetPosition().x == nodeNB[j]->GetPosition().x) {
+				if(grid[i]->GetPosition().y < nodeNB[j]->GetPosition().y)
+					SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), grid[i]->GetPosition().x, grid[i]->GetPosition().y + 3, nodeNB[j]->GetPosition().x, nodeNB[j]->GetPosition().y - 3);
+				else
+					SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), grid[i]->GetPosition().x, grid[i]->GetPosition().y - 3, nodeNB[j]->GetPosition().x, nodeNB[j]->GetPosition().y + 3);
+			}
+			else {
+				if(grid[i]->GetPosition().x < nodeNB[j]->GetPosition().x)
+					SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), grid[i]->GetPosition().x + 3, grid[i]->GetPosition().y, nodeNB[j]->GetPosition().x - 3, nodeNB[j]->GetPosition().y);
+				else
+					SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), grid[i]->GetPosition().x - 3, grid[i]->GetPosition().y, nodeNB[j]->GetPosition().x + 3, nodeNB[j]->GetPosition().y);
 
-			SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), grid[i]->GetPosition().x,	grid[i]->GetPosition().y, nodeNB[j]->GetPosition().x, nodeNB[j]->GetPosition().x);
-		}*/
+			}
+
+		}
 	}
-	std::vector<Node*> nodeNB = grid[0]->GetNB();
+	//draw_circle(TheApp::Instance()->getRenderer(), grid[3]->GetPosition().x, grid[3]->GetPosition().y, 15, 100, 100, 100, 255);
+	/*std::vector<Node*> nodeNB = grid[0]->GetNB();
 	for (int j = 0; j < nodeNB.size(); j++) {
-
-	SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), grid[0]->GetPosition().x,	grid[0]->GetPosition().y, nodeNB[j]->GetPosition().x, nodeNB[j]->GetPosition().x);
-	}
+		SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), grid[1]->GetPosition().x,	grid[1]->GetPosition().y, nodeNB[j]->GetPosition().x, nodeNB[j]->GetPosition().x);
+	}*/
 
 
 	for (int i = 0; i < (int)path.points.size(); i++)
@@ -339,43 +352,43 @@ bool ScenePathFinding::isValidCell(Vector2D cell)
 
 void ScenePathFinding::CreateGrid(const std::vector<std::vector<int>>& maze) {
 	int offset = CELL_SIZE / 2;
-	bool* topWall = new bool[maze[0].size()];
+	bool* leftWall = new bool[maze[0].size()];
 	
-	std::queue<Node*> topNodes;
-	bool leftWall = true;
-	for (int i = 0; i < maze.size(); i++) {
-		for (int j = 0; j < maze[i].size(); j++) {
+	std::queue<Node*> leftNodes;
+	bool topWall = true;
+	for (int i = 0; i < maze.size(); i++) { // Columns
+		for (int j = 0; j < maze[i].size(); j++) { // Rows
 			if (maze[i][j] == 0) { // that position is actually a wall, we won't create a node
-				topWall[j] = true;
-				leftWall = true;
-				if (i != 0 && !topWall[j]) {//we prevent diagonal linking
-					topNodes.pop();
+				if (!leftWall[j]) {//we prevent diagonal linking
+					leftNodes.pop();
 				}
+				topWall = true;
+				leftWall[j] = true;
 			}
 			else {
 				Node* newNode = new Node(Vector2D(offset + i * CELL_SIZE, offset + j * CELL_SIZE), maze[i][j]);
-				if (i != 0) {
-					if (topWall[j]) { // if the top node was a wall we store it into a queue
-						topWall[j] = false;
-						if(i != maze.size() - 1)
-							topNodes.push(newNode);
-					}
-					else { // if the top node wasn't a wall
-						newNode->AddNB(topNodes.front());
-						topNodes.front()->AddNB(newNode);
-						topNodes.pop();
-						if (i != maze.size() - 1)
-							topNodes.push(newNode);
-					}
+				
+				if (leftWall[j]) { // if the left node was a wall we store the actual one it into a queue
+					leftWall[j] = false;
+					if(i != maze.size() - 1)
+						leftNodes.push(newNode);
 				}
-				if (!leftWall) {
+				else { // if the left node wasn't a wall
+					newNode->AddNB(leftNodes.front());
+					leftNodes.front()->AddNB(newNode);
+					leftNodes.pop();
+					if (i != maze.size() - 1)
+						leftNodes.push(newNode);
+				}
+				
+				if (!topWall) {
 					newNode->AddNB(grid.back());
 					grid.back()->AddNB(newNode);
 				}
 				grid.push_back(newNode);
-				leftWall = false;
+				topWall = false;
 			}
 		}
 	}
-	delete topWall;
+	delete[] leftWall;
 }
