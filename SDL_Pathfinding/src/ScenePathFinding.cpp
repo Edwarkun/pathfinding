@@ -30,11 +30,11 @@ ScenePathFinding::ScenePathFinding()
 		coinPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
 
 	// PathFollowing next Target
-	currentTarget = Vector2D(0, 0);
+	currentTarget = Vector2D(agent->getPosition().x, agent->getPosition().y);
 	currentTargetIndex = -1;
 
 	//Execute the pathfinding algorithm
-
+	agent->FindPath(grid, currentTarget, coinPosition, BREATH_FIRST_SEARCH);
 }
 
 ScenePathFinding::~ScenePathFinding()
@@ -60,7 +60,7 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 		break;
 	case SDL_MOUSEMOTION:
 	case SDL_MOUSEBUTTONDOWN:
-		/*if (event->button.button == SDL_BUTTON_LEFT)
+		if (event->button.button == SDL_BUTTON_LEFT)
 		{
 			Vector2D cell = pix2cell(Vector2D((float)(event->button.x), (float)(event->button.y)));
 			if (isValidCell(cell))
@@ -71,7 +71,7 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 
 				path.points.push_back(cell2pix(cell));
 			}
-		}*/
+		}
 		break;
 	default:
 		break;
