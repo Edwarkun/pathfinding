@@ -60,7 +60,7 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 		break;
 	case SDL_MOUSEMOTION:
 	case SDL_MOUSEBUTTONDOWN:
-		/*if (event->button.button == SDL_BUTTON_LEFT)
+		if (event->button.button == SDL_BUTTON_LEFT)
 		{
 			Vector2D cell = pix2cell(Vector2D((float)(event->button.x), (float)(event->button.y)));
 			if (isValidCell(cell))
@@ -71,7 +71,7 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 
 				path.points.push_back(cell2pix(cell));
 			}
-		}*/
+		}
 		break;
 	default:
 		break;
@@ -139,6 +139,7 @@ void ScenePathFinding::draw()
 		}
 	}
 	//Grid drawing
+	/*
 	for (int i = 0; i < grid.size(); i++) {
 		draw_circle(TheApp::Instance()->getRenderer(), grid[i]->GetPosition().x, grid[i]->GetPosition().y, 15, 100, 100, 100, 255);
 		std::vector<Node*> nodeNB = grid[i]->GetNB();
@@ -159,6 +160,7 @@ void ScenePathFinding::draw()
 
 		}
 	}
+	*/
 	//draw_circle(TheApp::Instance()->getRenderer(), grid[3]->GetPosition().x, grid[3]->GetPosition().y, 15, 100, 100, 100, 255);
 	/*std::vector<Node*> nodeNB = grid[0]->GetNB();
 	for (int j = 0; j < nodeNB.size(); j++) {
