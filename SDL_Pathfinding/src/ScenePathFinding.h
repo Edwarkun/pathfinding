@@ -5,6 +5,7 @@
 #include "Agent.h"
 #include "Path.h"
 #include <queue>
+#include "Node.h"
 
 class ScenePathFinding :
 	public Scene
@@ -38,28 +39,7 @@ private:
 	bool isValidCell(Vector2D cell);
 	void CreateGrid(const std::vector<std::vector<int>>& maze);
 
-	class Node {
-	private:
-		Vector2D position;
-		float cost;
-		std::vector<Node*> NB;
-	public:
-		Node(const Vector2D& pos, const float& cst) : position(pos), cost(cst) {};
-		inline void SetPosition(Vector2D newPos) { position = newPos; }
-		inline Vector2D GetPosition() { return position; }
-		inline float GetCost() { return cost; }
-		inline void SetCost(float newCost) { cost = newCost; }
-		inline void AddNB(Node* newNB) { NB.push_back(newNB);}
-		inline std::vector<Node*> GetNB() { return NB; }
-		void RemoveNB(Node* targetNB) {
-			for (int i = 0; i < NB.size(); i++) {
-				if (NB[i] == targetNB) {
-					NB.erase(NB.begin() + i);
-					break;
-				}
-			}
-		}
-	};
+
 
 	std::vector<Node*> grid;
 };

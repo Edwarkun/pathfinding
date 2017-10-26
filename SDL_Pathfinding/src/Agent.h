@@ -7,7 +7,12 @@
 #include "Vector2D.h"
 #include "utils.h"
 #include "SteeringBehavior.h"
+#include "Node.h"
+#include "Path.h"
+#include <queue>
+#include <list>
 
+enum PathfindingType {BREATH_FIRST_SEARCH, DIJKSTRA, GREEDY_BFG, A_STAR};
 
 class Agent
 {
@@ -47,6 +52,7 @@ public:
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 	void update(Vector2D steering_force, float dtime, SDL_Event *event);
 	void draw();
+	Path FindPath(std::vector<Node*>, Vector2D, Vector2D, PathfindingType);
 	bool Agent::loadSpriteTexture(char* filename, int num_frames=1);
 	
 };

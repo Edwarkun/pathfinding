@@ -156,3 +156,67 @@ bool Agent::loadSpriteTexture(char* filename, int _num_frames)
 
 	return true;
 }
+
+Path  Agent::FindPath(std::vector<Node*> grid, Vector2D startPosition, Vector2D finishPosition, PathfindingType algorithm) {
+	Path path;
+	Node* start = nullptr;
+	Node* finish = nullptr;
+
+	bool startFound = false;
+	bool finishFound = startFound;
+	for (int i = 0; i < grid.size(); i++) {
+		if (grid[i]->GetPosition() == startPosition && !startFound) {
+			start = grid[i];
+			startFound = true;
+		}
+		else if (grid[i]->GetPosition() == finishPosition && !finishFound) {
+			finish = grid[i];
+			finishFound = true;
+		}
+	}
+
+	std::queue<Node*> frontier;
+	std::vector<Node*> cameFrom;
+	switch (algorithm) {
+		case BREATH_FIRST_SEARCH:
+			frontier.push(start);
+			cameFrom.push_back(nullptr);
+			while (frontier.size()) {
+				Node* current = frontier.front();
+				std::vector<Node*> currentNB = current->GetNB();
+				for (int i = 0; i < currentNB.size(); i++) {
+					bool visited = false;
+					for (int j = 0; j < cameFrom.size(); j++) {
+						if (currentNB[i] == cameFrom[j]) {
+							visited = true;
+						}
+					}
+					if (!visited) {
+						cameFrom.push_back(current);
+						frontier.push(currentNB[i]);
+
+						if (current == finish) { 
+							for (int j = 0; j < cameFrom.size(); j++) {
+								if(cameFrom[i] != nullptr)
+									path.points.push_back(cameFrom[j]->GetPosition());
+							}
+							break;
+						}
+					}
+				}
+				frontier.pop();
+			}
+
+			break;
+		case DIJKSTRA:
+			break;
+		case GREEDY_BFG:
+			break;
+		case A_STAR:
+			break;
+		default:
+			break;
+	}
+	
+	return path;
+}
