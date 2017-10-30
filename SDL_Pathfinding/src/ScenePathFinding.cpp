@@ -34,7 +34,7 @@ ScenePathFinding::ScenePathFinding()
 	currentTargetIndex = -1;
 
 	//Execute the pathfinding algorithm
-	agent->FindPath(grid, currentTarget, coinPosition, BREATH_FIRST_SEARCH);
+	agent->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH);
 }
 
 ScenePathFinding::~ScenePathFinding()
@@ -98,6 +98,7 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 						while ((!isValidCell(coinPosition)) || (Vector2D::Distance(coinPosition, pix2cell(agents[0]->getPosition()))<3))
 							coinPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
 						//Execute the finding algorithm again here
+						agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH);
 					}
 				}
 				else

@@ -163,13 +163,13 @@ Path  Agent::FindPath(std::vector<Node*> grid, Vector2D startPosition, Vector2D 
 	Node* finish = nullptr;
 
 	bool startFound = false;
-	bool finishFound = startFound;
+	bool finishFound = false;
 	for (int i = 0; i < grid.size(); i++) {
 		if (grid[i]->GetPosition() == startPosition && !startFound) {
 			start = grid[i];
 			startFound = true;
 		}
-		else if (grid[i]->GetPosition() == finishPosition && !finishFound) {
+		if (grid[i]->GetPosition() == finishPosition && !finishFound) {
 			finish = grid[i];
 			finishFound = true;
 		}
@@ -192,12 +192,12 @@ Path  Agent::FindPath(std::vector<Node*> grid, Vector2D startPosition, Vector2D 
 						}
 					}
 					if (!visited) {
-						cameFrom.push_back(current);
+						cameFrom.push_back(currentNB[i]);
 						frontier.push(currentNB[i]);
 
 						if (current == finish) { 
 							for (int j = 0; j < cameFrom.size(); j++) {
-								if(cameFrom[i] != nullptr)
+								if(cameFrom[j] != nullptr)
 									path.points.push_back(cameFrom[j]->GetPosition());
 							}
 							break;
