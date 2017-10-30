@@ -10,7 +10,8 @@
 #include "Node.h"
 #include "Path.h"
 #include <queue>
-#include <list>
+#include <algorithm>
+#include <unordered_map>
 
 enum PathfindingType {BREATH_FIRST_SEARCH, DIJKSTRA, GREEDY_BFG, A_STAR};
 

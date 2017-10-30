@@ -176,30 +176,31 @@ Path  Agent::FindPath(std::vector<Node*> grid, Vector2D startPosition, Vector2D 
 	}
 
 	std::queue<Node*> frontier;
-	std::vector<Node*> cameFrom;
+	std::unordered_map<Node*, Node*> cameFrom;
 	switch (algorithm) {
 		case BREATH_FIRST_SEARCH:
 			frontier.push(start);
-			cameFrom.push_back(nullptr);
+			cameFrom[start] = nullptr;
 			while (frontier.size()) {
 				Node* current = frontier.front();
 				std::vector<Node*> currentNB = current->GetNB();
 				for (int i = 0; i < currentNB.size(); i++) {
 					bool visited = false;
 					for (int j = 0; j < cameFrom.size(); j++) {
-						if (currentNB[i] == cameFrom[j]) {
+						if (cameFrom.find(currentNB[i]) != cameFrom.end()) {
 							visited = true;
 						}
 					}
 					if (!visited) {
-						cameFrom.push_back(currentNB[i]);
+						cameFrom[currentNB[i]] = current;
 						frontier.push(currentNB[i]);
 
-						if (current == finish) { 
-							for (int j = 0; j < cameFrom.size(); j++) {
-								if(cameFrom[j] != nullptr)
-									path.points.push_back(cameFrom[j]->GetPosition());
+						if (current == finish) { 					
+							while (current != start) {
+								path.points.push_back(current->GetPosition());
+								current = cameFrom[current];
 							}
+							path.points.push_back(current->GetPosition());
 							break;
 						}
 					}
@@ -217,6 +218,6 @@ Path  Agent::FindPath(std::vector<Node*> grid, Vector2D startPosition, Vector2D 
 		default:
 			break;
 	}
-	
+	std::reverse(path.points.begin(), path.points.end());
 	return path;
 }
