@@ -53,7 +53,7 @@ public:
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 	void update(Vector2D steering_force, float dtime, SDL_Event *event);
 	void draw();
-	Path FindPath(std::vector<Node*>, Vector2D, Vector2D, PathfindingType);
+	Path FindPath(const std::vector<Node*>&, const  Vector2D&, const Vector2D&, const PathfindingType&);
 	bool Agent::loadSpriteTexture(char* filename, int num_frames=1);
 	
 };

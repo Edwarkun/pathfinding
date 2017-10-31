@@ -157,7 +157,7 @@ bool Agent::loadSpriteTexture(char* filename, int _num_frames)
 	return true;
 }
 
-Path  Agent::FindPath(std::vector<Node*> grid, Vector2D startPosition, Vector2D finishPosition, PathfindingType algorithm) {
+Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosition, const Vector2D& finishPosition,const PathfindingType& algorithm) {
 	Path path;
 	Node* start = nullptr;
 	Node* finish = nullptr;
@@ -174,7 +174,9 @@ Path  Agent::FindPath(std::vector<Node*> grid, Vector2D startPosition, Vector2D 
 			finishFound = true;
 		}
 	}
-
+	if (!startFound || !finishFound ) {
+		return path;
+	}
 	std::queue<Node*> frontier;
 	std::unordered_map<Node*, Node*> cameFrom;
 	switch (algorithm) {
@@ -218,6 +220,8 @@ Path  Agent::FindPath(std::vector<Node*> grid, Vector2D startPosition, Vector2D 
 		default:
 			break;
 	}
+	if (!path.points.size())
+		int a = 0;
 	std::reverse(path.points.begin(), path.points.end());
 	return path;
 }
