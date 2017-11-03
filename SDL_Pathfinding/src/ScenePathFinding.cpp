@@ -34,7 +34,7 @@ ScenePathFinding::ScenePathFinding()
 	currentTargetIndex = -1;
 
 	//Execute the pathfinding algorithm
-	path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH);
+	
 
 }
 
@@ -103,10 +103,7 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 						coinPosition = Vector2D(-1, -1);
 						while ((!isValidCell(coinPosition)) || (Vector2D::Distance(coinPosition, pix2cell(agents[0]->getPosition()))<3))
 							coinPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
-						//Execute the finding algorithm again here
-						path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH);
-
-
+						
 					}
 				}
 				else
@@ -126,6 +123,9 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 	else
 	{
 		agents[0]->update(Vector2D(0,0), dtime, event);
+		//Execute the finding algorithm again here
+		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH);
+		path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), DIJKSTRA);
 	}
 }
 

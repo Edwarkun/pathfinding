@@ -164,23 +164,28 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 
 	bool startFound = false;
 	bool finishFound = false;
+	//In order to prevent an inverted path, we swap the finish and start variables
+	//If we don't sawp them, we must use this line of code before returning the path (needs #include <algorithm>):
+	//std::reverse(path.points.begin(), path.points.end());
 	for (int i = 0; i < grid.size(); i++) {
 		if (grid[i]->GetPosition() == startPosition && !startFound) {
-			start = grid[i];
+			finish = grid[i];
 			startFound = true;
 		}
 		if (grid[i]->GetPosition() == finishPosition && !finishFound) {
-			finish = grid[i];
+			start = grid[i];
 			finishFound = true;
 		}
 	}
 	if (!startFound || !finishFound ) {
 		return path;
 	}
-	std::queue<Node*> frontier;
-	std::unordered_map<Node*, Node*> cameFrom;
+
 	switch (algorithm) {
+		{
 		case BREATH_FIRST_SEARCH:
+			std::queue<Node*> frontier;
+			std::unordered_map<Node*, Node*> cameFrom;
 			frontier.push(start);
 			cameFrom[start] = nullptr;
 			while (frontier.size()) {
@@ -196,32 +201,76 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 					if (!visited) {
 						cameFrom[currentNB[i]] = current;
 						frontier.push(currentNB[i]);
-
-						if (current == finish) { 					
-							while (current != start) {
-								path.points.push_back(current->GetPosition());
-								current = cameFrom[current];
-							}
-							path.points.push_back(current->GetPosition());
-							break;
-						}
 					}
 				}
+
+				if (current == finish) {
+					while (current != start) {
+						path.points.push_back(current->GetPosition());
+						current = cameFrom[current];
+					}
+					path.points.push_back(current->GetPosition());
+					
+					return path;
+				}
+
 				frontier.pop();
 			}
 
 			break;
+		}
+		{
 		case DIJKSTRA:
+			std::priority_queue<std::pair<int, Node*>, std::vector<std::pair<int, Node*>>, std::greater<std::pair<int, Node*>>> frontier;
+			std::unordered_map<Node*, Node*> cameFrom;
+			std::unordered_map<Node*, int> costSoFar;
+
+			frontier.emplace(std::make_pair(0,start));
+			cameFrom[start] = nullptr;
+			costSoFar[start] = 0;
+			while (frontier.size()) {
+				Node* current = frontier.top().second;
+				std::vector<Node*> currentNB = current->GetNB();
+				for (int i = 0; i < currentNB.size(); i++) {
+
+					Node* next = currentNB[i];
+
+					int newCost = costSoFar[current] + next->GetCost();
+					if (costSoFar.find(next) == costSoFar.end() || newCost < costSoFar[next]) {
+						costSoFar[next] = newCost;
+						frontier.emplace(std::make_pair(newCost, next));
+						cameFrom[next] = current;
+					}
+				}
+				if (current == finish) {
+					while (current != start) {
+						path.points.push_back(current->GetPosition());
+						current = cameFrom[current];
+					}
+					path.points.push_back(current->GetPosition());
+
+					return path;
+				}			
+				if (frontier.size() >= 4) {
+					int a = 0;
+				}
+				frontier.pop();
+			}
 			break;
+		}
+		{
 		case GREEDY_BFG:
 			break;
+		}
+		{
 		case A_STAR:
 			break;
+		}
 		default:
 			break;
 	}
-	if (!path.points.size())
+	if (!path.points.size()) {
 		int a = 0;
-	std::reverse(path.points.begin(), path.points.end());
+	}
 	return path;
 }

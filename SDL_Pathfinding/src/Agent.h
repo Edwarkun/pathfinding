@@ -9,8 +9,8 @@
 #include "SteeringBehavior.h"
 #include "Node.h"
 #include "Path.h"
-#include <queue>
-#include <algorithm>
+#include <queue> 
+#include <functional>
 #include <unordered_map>
 
 enum PathfindingType {BREATH_FIRST_SEARCH, DIJKSTRA, GREEDY_BFG, A_STAR};
