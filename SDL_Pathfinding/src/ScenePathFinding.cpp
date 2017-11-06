@@ -123,9 +123,11 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 	else
 	{
 		agents[0]->update(Vector2D(0,0), dtime, event);
-		//Execute the finding algorithm again here
+		//Execute the finding algorithm here
 		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH);
-		path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), DIJKSTRA);
+		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), DIJKSTRA);
+		path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), GREEDY_BFG);
+		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), A_STAR);
 	}
 }
 

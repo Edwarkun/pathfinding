@@ -190,6 +190,17 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 			cameFrom[start] = nullptr;
 			while (frontier.size()) {
 				Node* current = frontier.front();
+
+				if (current == finish) {
+					while (current != start) {
+						path.points.push_back(current->GetPosition());
+						current = cameFrom[current];
+					}
+					path.points.push_back(current->GetPosition());
+
+					return path;
+				}
+
 				std::vector<Node*> currentNB = current->GetNB();
 				for (int i = 0; i < currentNB.size(); i++) {
 					bool visited = false;
@@ -203,17 +214,6 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 						frontier.push(currentNB[i]);
 					}
 				}
-
-				if (current == finish) {
-					while (current != start) {
-						path.points.push_back(current->GetPosition());
-						current = cameFrom[current];
-					}
-					path.points.push_back(current->GetPosition());
-					
-					return path;
-				}
-
 				frontier.pop();
 			}
 
@@ -221,7 +221,7 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 		}
 		{
 		case DIJKSTRA:
-			std::priority_queue<std::pair<int, Node*>, std::vector<std::pair<int, Node*>>, std::greater<std::pair<int, Node*>>> frontier;
+			std::priority_queue<std::pair<int, Node*>, std::vector<std::pair<int, Node*>>, CompareDist> frontier;
 			std::unordered_map<Node*, Node*> cameFrom;
 			std::unordered_map<Node*, int> costSoFar;
 
@@ -230,6 +230,17 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 			costSoFar[start] = 0;
 			while (frontier.size()) {
 				Node* current = frontier.top().second;
+
+				if (current == finish) {
+					while (current != start) {
+						path.points.push_back(current->GetPosition());
+						current = cameFrom[current];
+					}
+					path.points.push_back(current->GetPosition());
+
+					return path;
+				}
+
 				std::vector<Node*> currentNB = current->GetNB();
 				for (int i = 0; i < currentNB.size(); i++) {
 
@@ -242,6 +253,68 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 						cameFrom[next] = current;
 					}
 				}
+				frontier.pop();
+			}
+			break;
+		}
+		{
+		case GREEDY_BFG:
+			std::priority_queue<std::pair<int, Node*>, std::vector<std::pair<int, Node*>>, CompareDist> frontier;
+			std::unordered_map<Node*, Node*> cameFrom;
+
+			frontier.emplace(std::make_pair(0, start));
+			cameFrom[start] = nullptr;
+			while (frontier.size()) {
+				Node* current = frontier.top().second;
+
+				if (current == finish) {
+					while (current != start) {
+						path.points.push_back(current->GetPosition());
+						current = cameFrom[current];
+					}
+					path.points.push_back(current->GetPosition());
+					return path;
+				}
+
+				std::vector<Node*> currentNB = current->GetNB();
+				for (int i = 0; i < currentNB.size(); i++) {
+
+					Node* next = currentNB[i];	
+
+					if (cameFrom.find(next) == cameFrom.end()) {
+						int newCost = heuristic(next, finish);
+						frontier.emplace(std::make_pair(-newCost, next));
+						cameFrom[next] = current;
+					}
+				}
+				frontier.pop();
+			}
+			break;
+		}
+		{
+		case A_STAR:
+			std::priority_queue<std::pair<int, Node*>, std::vector<std::pair<int, Node*>>, CompareDist> frontier;
+			std::unordered_map<Node*, Node*> cameFrom;
+			std::unordered_map<Node*, int> costSoFar;
+
+			frontier.emplace(std::make_pair(0, start));
+			cameFrom[start] = nullptr;
+			costSoFar[start] = 0;
+			while (frontier.size()) {
+				Node* current = frontier.top().second;
+				std::vector<Node*> currentNB = current->GetNB();
+				for (int i = 0; i < currentNB.size(); i++) {
+
+					Node* next = currentNB[i];
+
+					int newCost = costSoFar[current] + next->GetCost();
+					if (costSoFar.find(next) == costSoFar.end() || newCost < costSoFar[next]) {
+						costSoFar[next] = newCost;
+						float priority = newCost + heuristic(finish, next);
+						frontier.emplace(std::make_pair(-priority, next));
+						cameFrom[next] = current;
+					}
+				}
 				if (current == finish) {
 					while (current != start) {
 						path.points.push_back(current->GetPosition());
@@ -250,20 +323,12 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 					path.points.push_back(current->GetPosition());
 
 					return path;
-				}			
+				}
 				if (frontier.size() >= 4) {
 					int a = 0;
 				}
 				frontier.pop();
 			}
-			break;
-		}
-		{
-		case GREEDY_BFG:
-			break;
-		}
-		{
-		case A_STAR:
 			break;
 		}
 		default:
@@ -273,4 +338,10 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 		int a = 0;
 	}
 	return path;
+}
+
+float Agent::heuristic(Node* fromN, Node* toN) {
+	float a = abs(toN->GetPosition().x - fromN->GetPosition().x);
+	float b = abs(toN->GetPosition().y - fromN->GetPosition().y);
+	return a + b;
 }

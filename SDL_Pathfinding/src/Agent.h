@@ -54,6 +54,15 @@ public:
 	void update(Vector2D steering_force, float dtime, SDL_Event *event);
 	void draw();
 	Path FindPath(const std::vector<Node*>&, const  Vector2D&, const Vector2D&, const PathfindingType&);
+	float heuristic(Node* fromN, Node* toN);
 	bool Agent::loadSpriteTexture(char* filename, int num_frames=1);
 	
+};
+
+class CompareDist
+{
+public:
+	bool operator()(std::pair<int, Node*> n1, std::pair<int, Node*> n2) {
+		return n1.first > n2.first;
+	}
 };
