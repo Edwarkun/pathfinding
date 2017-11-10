@@ -157,7 +157,7 @@ bool Agent::loadSpriteTexture(char* filename, int _num_frames)
 	return true;
 }
 
-Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosition, const Vector2D& finishPosition,const PathfindingType& algorithm) {
+Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosition, const Vector2D& finishPosition,const PathfindingType& algorithm, std::vector<std::pair<float,Vector2D>>& floodFillDraw, std::vector<Vector2D>& frontierDraw) {
 	Path path;
 	Node* start = nullptr;
 	Node* finish = nullptr;
@@ -259,14 +259,14 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 		}
 		{
 		case GREEDY_BFG:
-			std::priority_queue<std::pair<int, Node*>, std::vector<std::pair<int, Node*>>, CompareDist> frontier;
+			std::multimap<float, Node*> frontier;
 			std::unordered_map<Node*, Node*> cameFrom;
 
-			frontier.emplace(std::make_pair(0, start));
+			frontier.emplace(0, start);
 			cameFrom[start] = nullptr;
-			while (frontier.size()) {
-				Node* current = frontier.top().second;
 
+			while (frontier.size()) {
+				Node* current = frontier.begin()->second;
 				if (current == finish) {
 					while (current != start) {
 						path.points.push_back(current->GetPosition());
@@ -282,12 +282,14 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 					Node* next = currentNB[i];	
 
 					if (cameFrom.find(next) == cameFrom.end()) {
-						int newCost = heuristic(next, finish);
-						frontier.emplace(std::make_pair(-newCost, next));
+						float newCost = heuristic(next, finish);
+						frontier.emplace(newCost, next);
 						cameFrom[next] = current;
+						floodFillDraw.push_back(std::make_pair(heuristic(finish, next), next->GetPosition()));
 					}
 				}
-				frontier.pop();
+
+				frontier.erase(frontier.begin());
 			}
 			break;
 		}
@@ -311,7 +313,7 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 					if (costSoFar.find(next) == costSoFar.end() || newCost < costSoFar[next]) {
 						costSoFar[next] = newCost;
 						float priority = newCost + heuristic(finish, next);
-						frontier.emplace(std::make_pair(-priority, next));
+						frontier.emplace(std::make_pair(priority, next));
 						cameFrom[next] = current;
 					}
 				}
@@ -343,5 +345,6 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 float Agent::heuristic(Node* fromN, Node* toN) {
 	float a = abs(toN->GetPosition().x - fromN->GetPosition().x);
 	float b = abs(toN->GetPosition().y - fromN->GetPosition().y);
-	return a + b;
+	float distance = a + b;
+	return distance;
 }

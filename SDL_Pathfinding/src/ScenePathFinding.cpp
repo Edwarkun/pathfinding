@@ -126,7 +126,8 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 		//Execute the finding algorithm here
 		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH);
 		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), DIJKSTRA);
-		path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), GREEDY_BFG);
+		floodFill.clear();
+		path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), GREEDY_BFG, floodFill, frontier);
 		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), A_STAR);
 	}
 }
@@ -149,6 +150,13 @@ void ScenePathFinding::draw()
 			SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), 0, j, SRC_WIDTH, j);
 		}
 	}
+	for (int i = 0; i < floodFill.size(); i++) {
+		float brightness = floodFill[i].first / (SRC_WIDTH + SRC_HEIGHT);
+		draw_circle(TheApp::Instance()->getRenderer(), floodFill[i].second.x, floodFill[i].second.y, 15, 0, brightness * 255, 255, 255);
+	}
+	/*for (int i = 0; i < frontier.size(); i++) {
+		draw_circle(TheApp::Instance()->getRenderer(), frontier[i].x, frontier[i].y, 15, 200, 200, 0, 255);
+	}*/
 	//Grid drawing
 	/*
 	for (int i = 0; i < grid.size(); i++) {
