@@ -42,6 +42,6 @@ private:
 
 
 	std::vector<Node*> grid;
-	std::vector<std::pair<float,Vector2D>> floodFill;
+	std::vector<Vector2D> floodFill;
 	std::vector<Vector2D> frontier;
 };

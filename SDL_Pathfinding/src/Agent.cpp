@@ -157,7 +157,7 @@ bool Agent::loadSpriteTexture(char* filename, int _num_frames)
 	return true;
 }
 
-Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosition, const Vector2D& finishPosition,const PathfindingType& algorithm, std::vector<std::pair<float,Vector2D>>& floodFillDraw, std::vector<Vector2D>& frontierDraw) {
+Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosition, const Vector2D& finishPosition,const PathfindingType& algorithm, std::vector<Vector2D>& floodFillDraw, std::vector<Vector2D>& frontierDraw) {
 	Path path;
 	Node* start = nullptr;
 	Node* finish = nullptr;
@@ -169,11 +169,11 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 	//std::reverse(path.points.begin(), path.points.end());
 	for (int i = 0; i < grid.size(); i++) {
 		if (grid[i]->GetPosition() == startPosition && !startFound) {
-			finish = grid[i];
+			start = grid[i];
 			startFound = true;
 		}
 		if (grid[i]->GetPosition() == finishPosition && !finishFound) {
-			start = grid[i];
+			finish = grid[i];
 			finishFound = true;
 		}
 	}
@@ -197,21 +197,29 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 						current = cameFrom[current];
 					}
 					path.points.push_back(current->GetPosition());
-
+					std::reverse(path.points.begin(), path.points.end());
+					while (frontier.size()) {
+						frontierDraw.push_back(frontier.front()->GetPosition());
+						frontier.pop();
+					}
 					return path;
 				}
 
 				std::vector<Node*> currentNB = current->GetNB();
 				for (int i = 0; i < currentNB.size(); i++) {
+
 					bool visited = false;
+					Node* next = currentNB[i];
+
 					for (int j = 0; j < cameFrom.size(); j++) {
-						if (cameFrom.find(currentNB[i]) != cameFrom.end()) {
+						if (cameFrom.find(next) != cameFrom.end()) {
 							visited = true;
 						}
 					}
 					if (!visited) {
-						cameFrom[currentNB[i]] = current;
-						frontier.push(currentNB[i]);
+						cameFrom[next] = current;
+						frontier.push(next);
+						floodFillDraw.push_back(next->GetPosition());
 					}
 				}
 				frontier.pop();
@@ -237,11 +245,16 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 						current = cameFrom[current];
 					}
 					path.points.push_back(current->GetPosition());
-
+					std::reverse(path.points.begin(), path.points.end());
+					while(frontier.size()) {
+						frontierDraw.push_back(frontier.top().second->GetPosition());
+						frontier.pop();
+					}
 					return path;
 				}
 
 				std::vector<Node*> currentNB = current->GetNB();
+				std::vector<std::pair<float, Node*>> newNodes;
 				for (int i = 0; i < currentNB.size(); i++) {
 
 					Node* next = currentNB[i];
@@ -249,47 +262,63 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 					int newCost = costSoFar[current] + next->GetCost();
 					if (costSoFar.find(next) == costSoFar.end() || newCost < costSoFar[next]) {
 						costSoFar[next] = newCost;
-						frontier.emplace(std::make_pair(newCost, next));
+						newNodes.push_back(std::make_pair(newCost, next));
 						cameFrom[next] = current;
+						floodFillDraw.push_back(next->GetPosition());
 					}
 				}
 				frontier.pop();
+				for (int i = 0; i < newNodes.size(); i++) {
+					frontier.emplace(newNodes[i]);
+				}
 			}
 			break;
 		}
 		{
 		case GREEDY_BFG:
-			std::multimap<float, Node*> frontier;
+			std::priority_queue<std::pair<int, Node*>, std::vector<std::pair<int, Node*>>, CompareDist> frontier;
 			std::unordered_map<Node*, Node*> cameFrom;
 
-			frontier.emplace(0, start);
+			float lowestCost = 0;
+			frontier.emplace(lowestCost, start);
 			cameFrom[start] = nullptr;
 
+
 			while (frontier.size()) {
-				Node* current = frontier.begin()->second;
+
+				Node* current = frontier.top().second;
+
 				if (current == finish) {
 					while (current != start) {
 						path.points.push_back(current->GetPosition());
 						current = cameFrom[current];
 					}
 					path.points.push_back(current->GetPosition());
+					std::reverse(path.points.begin(), path.points.end());
+					while (frontier.size()) {
+						frontierDraw.push_back(frontier.top().second->GetPosition());
+						frontier.pop();
+					}
 					return path;
 				}
 
 				std::vector<Node*> currentNB = current->GetNB();
+				std::vector<std::pair<float, Node*>> newNodes;
 				for (int i = 0; i < currentNB.size(); i++) {
 
 					Node* next = currentNB[i];	
 
 					if (cameFrom.find(next) == cameFrom.end()) {
 						float newCost = heuristic(next, finish);
-						frontier.emplace(newCost, next);
+						newNodes.push_back(std::make_pair(newCost, next));
 						cameFrom[next] = current;
-						floodFillDraw.push_back(std::make_pair(heuristic(finish, next), next->GetPosition()));
+						floodFillDraw.push_back(next->GetPosition());
 					}
 				}
-
-				frontier.erase(frontier.begin());
+				frontier.pop();
+				for (int i = 0; i < newNodes.size(); i++) {
+					frontier.emplace(newNodes[i]);
+				}
 			}
 			break;
 		}
@@ -304,7 +333,23 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 			costSoFar[start] = 0;
 			while (frontier.size()) {
 				Node* current = frontier.top().second;
+
+				if (current == finish) {
+					while (current != start) {
+						path.points.push_back(current->GetPosition());
+						current = cameFrom[current];
+					}
+					path.points.push_back(current->GetPosition());
+					std::reverse(path.points.begin(), path.points.end());
+					while (frontier.size()) {
+						frontierDraw.push_back(frontier.top().second->GetPosition());
+						frontier.pop();
+					}
+					return path;
+				}
+
 				std::vector<Node*> currentNB = current->GetNB();
+				std::vector<std::pair<float, Node*>> newNodes;
 				for (int i = 0; i < currentNB.size(); i++) {
 
 					Node* next = currentNB[i];
@@ -313,23 +358,16 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 					if (costSoFar.find(next) == costSoFar.end() || newCost < costSoFar[next]) {
 						costSoFar[next] = newCost;
 						float priority = newCost + heuristic(finish, next);
-						frontier.emplace(std::make_pair(priority, next));
+						newNodes.push_back(std::make_pair(priority, next));
 						cameFrom[next] = current;
+						floodFillDraw.push_back(next->GetPosition());
 					}
 				}
-				if (current == finish) {
-					while (current != start) {
-						path.points.push_back(current->GetPosition());
-						current = cameFrom[current];
-					}
-					path.points.push_back(current->GetPosition());
 
-					return path;
-				}
-				if (frontier.size() >= 4) {
-					int a = 0;
-				}
 				frontier.pop();
+				for (int i = 0; i < newNodes.size(); i++) {
+					frontier.emplace(newNodes[i]);
+				}
 			}
 			break;
 		}
@@ -346,5 +384,7 @@ float Agent::heuristic(Node* fromN, Node* toN) {
 	float a = abs(toN->GetPosition().x - fromN->GetPosition().x);
 	float b = abs(toN->GetPosition().y - fromN->GetPosition().y);
 	float distance = a + b;
+
+	//float distance = sqrt(pow(toN->GetPosition().x - fromN->GetPosition().x,2) + pow(toN->GetPosition().y  - fromN->GetPosition().y,2));
 	return distance;
 }

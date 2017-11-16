@@ -24,8 +24,9 @@ ScenePathFinding::ScenePathFinding()
 		rand_cell = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
 	agents[0]->setPosition(cell2pix(rand_cell));
 
+
 	// set the coin in a random cell (but at least 3 cells far from the agent)
-	coinPosition = Vector2D(-1,-1);
+	coinPosition = Vector2D(-1, -1);
 	while ((!isValidCell(coinPosition)) || (Vector2D::Distance(coinPosition, rand_cell)<3)) 
 		coinPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
 
@@ -124,11 +125,12 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 	{
 		agents[0]->update(Vector2D(0,0), dtime, event);
 		//Execute the finding algorithm here
-		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH);
-		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), DIJKSTRA);
 		floodFill.clear();
-		path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), GREEDY_BFG, floodFill, frontier);
-		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), A_STAR);
+		frontier.clear();
+		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH, floodFill, frontier);
+		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), DIJKSTRA, floodFill, frontier);
+		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), GREEDY_BFG, floodFill, frontier);
+		path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), A_STAR, floodFill, frontier);
 	}
 }
 
@@ -151,12 +153,11 @@ void ScenePathFinding::draw()
 		}
 	}
 	for (int i = 0; i < floodFill.size(); i++) {
-		float brightness = floodFill[i].first / (SRC_WIDTH + SRC_HEIGHT);
-		draw_circle(TheApp::Instance()->getRenderer(), floodFill[i].second.x, floodFill[i].second.y, 15, 0, brightness * 255, 255, 255);
+		draw_circle(TheApp::Instance()->getRenderer(), floodFill[i].x, floodFill[i].y, 15, 15, 255 , 255, 255);
 	}
-	/*for (int i = 0; i < frontier.size(); i++) {
-		draw_circle(TheApp::Instance()->getRenderer(), frontier[i].x, frontier[i].y, 15, 200, 200, 0, 255);
-	}*/
+	for (int i = 0; i < frontier.size(); i++) {
+		draw_circle(TheApp::Instance()->getRenderer(), frontier[i].x, frontier[i].y, 15, 225, 15, 225, 255);
+	}
 	//Grid drawing
 	/*
 	for (int i = 0; i < grid.size(); i++) {

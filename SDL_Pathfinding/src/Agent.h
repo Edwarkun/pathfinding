@@ -54,7 +54,7 @@ public:
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 	void update(Vector2D steering_force, float dtime, SDL_Event *event);
 	void draw();
-	Path FindPath(const std::vector<Node*>&, const  Vector2D&, const Vector2D&, const PathfindingType&, std::vector<std::pair<float, Vector2D>>& floodFillDraw, std::vector<Vector2D>& frontierDraw);
+	Path FindPath(const std::vector<Node*>&, const  Vector2D&, const Vector2D&, const PathfindingType&, std::vector<Vector2D>& floodFillDraw, std::vector<Vector2D>& frontierDraw);
 	float heuristic(Node* fromN, Node* toN);
 	bool Agent::loadSpriteTexture(char* filename, int num_frames=1);
 	
