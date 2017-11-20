@@ -30,6 +30,14 @@ ScenePathFinding::ScenePathFinding()
 	while ((!isValidCell(coinPosition)) || (Vector2D::Distance(coinPosition, rand_cell)<3)) 
 		coinPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
 
+	// set the multiple targets
+	numberOfTargets = 4;
+	for (int i = 0; i < numberOfTargets; i++) {
+		Vector2D newTargetPosition(-1, -1);
+		while ((!isValidCell(newTargetPosition)) || (Vector2D::Distance(newTargetPosition, rand_cell)<3))
+			newTargetPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
+		multipleTargets.push_back(cell2pix(newTargetPosition));
+	}
 	// PathFollowing next Target
 	currentTarget = Vector2D(agent->getPosition().x, agent->getPosition().y);
 	currentTargetIndex = -1;
@@ -124,13 +132,22 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 	else
 	{
 		agents[0]->update(Vector2D(0,0), dtime, event);
+		//Reset the multiple path
+		multipleTargets.clear();
+		for (int i = 0; i < numberOfTargets; i++) {
+			Vector2D newTargetPosition(-1, -1);
+			while ((!isValidCell(newTargetPosition)) || (Vector2D::Distance(newTargetPosition, pix2cell(agents[0]->getPosition()))<3))
+				newTargetPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
+			multipleTargets.push_back(cell2pix(newTargetPosition));
+		}
 		//Execute the finding algorithm here
 		floodFill.clear();
 		frontier.clear();
 		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH, floodFill, frontier);
 		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), DIJKSTRA, floodFill, frontier);
 		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), GREEDY_BFG, floodFill, frontier);
-		path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), A_STAR, floodFill, frontier);
+		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), A_STAR, floodFill, frontier);
+		path = agents[0]->FindMultiplePath(grid, currentTarget, multipleTargets, floodFill, frontier);
 	}
 }
 
@@ -152,11 +169,16 @@ void ScenePathFinding::draw()
 			SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), 0, j, SRC_WIDTH, j);
 		}
 	}
+	/*
 	for (int i = 0; i < floodFill.size(); i++) {
 		draw_circle(TheApp::Instance()->getRenderer(), floodFill[i].x, floodFill[i].y, 15, 15, 255 , 255, 255);
 	}
 	for (int i = 0; i < frontier.size(); i++) {
 		draw_circle(TheApp::Instance()->getRenderer(), frontier[i].x, frontier[i].y, 15, 225, 15, 225, 255);
+	}
+	*/
+	for (int i = 0; i < multipleTargets.size(); i++) {
+		draw_circle(TheApp::Instance()->getRenderer(), multipleTargets[i].x, multipleTargets[i].y, 10, 255, 255, 255, 255);
 	}
 	//Grid drawing
 	/*

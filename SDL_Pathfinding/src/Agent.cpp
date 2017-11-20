@@ -357,7 +357,7 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 					int newCost = costSoFar[current] + next->GetCost();
 					if (costSoFar.find(next) == costSoFar.end() || newCost < costSoFar[next]) {
 						costSoFar[next] = newCost;
-						float priority = newCost + heuristic(finish, next);
+						float priority = newCost + heuristic(finish, next) / 32;
 						newNodes.push_back(std::make_pair(priority, next));
 						cameFrom[next] = current;
 						floodFillDraw.push_back(next->GetPosition());
@@ -380,6 +380,51 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 	return path;
 }
 
+Path  Agent::FindMultiplePath(const std::vector<Node*>& grid, const Vector2D& startPosition, const std::vector<Vector2D>& targets, std::vector<Vector2D>& floodFillDraw, std::vector<Vector2D>& frontierDraw) {
+	//First we translate all the positions to Nodes instead of Vector2D
+	
+	Node* start = nullptr;
+	std::vector<Node*> targetsLeft;
+	Path finalPath;
+
+	bool startFound = false;
+	bool finishFound = false;
+	int targetsFound = 0;
+
+	for (int i = 0; i < grid.size(); i++) {
+		if (grid[i]->GetPosition() == startPosition && !startFound) {
+			start = grid[i];
+			startFound = true;
+		}
+		for (int j = 0; j < targets.size() && targetsFound < targets.size(); j++){
+			if (grid[i]->GetPosition() == targets[j]) {
+				targetsLeft.push_back(grid[i]);
+				targetsFound++;
+			}
+		}
+	}
+
+	for (int i = 0; i < targets.size() && targetsLeft.size(); i++) {
+		Node* bestTarget = targetsLeft[0];
+		float bestCost  = heuristic(start, targetsLeft[0]);
+		int index = 0;
+		for (int j = 0; j < targetsLeft.size(); j++) {
+			float cost = heuristic(start, targetsLeft[j]);
+			if (cost < bestCost) {
+				bestCost = cost;
+				bestTarget = targetsLeft[j];
+				index = j;
+			}
+		}
+		Path newPath = FindPath(grid, start->GetPosition(), bestTarget->GetPosition(), A_STAR, floodFillDraw, frontierDraw);
+		finalPath.points.insert(finalPath.points.end(), newPath.points.begin(), newPath.points.end());
+		start = bestTarget;
+		targetsLeft.erase(targetsLeft.begin() + index);
+	}
+
+	return finalPath;
+}
+
 float Agent::heuristic(Node* fromN, Node* toN) {
 	float a = abs(toN->GetPosition().x - fromN->GetPosition().x);
 	float b = abs(toN->GetPosition().y - fromN->GetPosition().y);
@@ -387,4 +432,12 @@ float Agent::heuristic(Node* fromN, Node* toN) {
 
 	//float distance = sqrt(pow(toN->GetPosition().x - fromN->GetPosition().x,2) + pow(toN->GetPosition().y  - fromN->GetPosition().y,2));
 	return distance;
+}
+
+float Agent::heuristicTunnel(Node* fromN, Node* toN) {
+	float distance = heuristic(fromN, toN);
+	if (distance > SRC_WIDTH / 2)
+		distance = SRC_WIDTH - distance;
+	return distance;
+
 }

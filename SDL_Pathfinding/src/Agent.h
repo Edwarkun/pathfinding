@@ -55,7 +55,9 @@ public:
 	void update(Vector2D steering_force, float dtime, SDL_Event *event);
 	void draw();
 	Path FindPath(const std::vector<Node*>&, const  Vector2D&, const Vector2D&, const PathfindingType&, std::vector<Vector2D>& floodFillDraw, std::vector<Vector2D>& frontierDraw);
+	Path FindMultiplePath(const std::vector<Node*>&, const  Vector2D&, const std::vector<Vector2D>&, std::vector<Vector2D>& floodFillDraw, std::vector<Vector2D>& frontierDraw);
 	float heuristic(Node* fromN, Node* toN);
+	float heuristicTunnel(Node* fromN, Node* toN);
 	bool Agent::loadSpriteTexture(char* filename, int num_frames=1);
 	
 };

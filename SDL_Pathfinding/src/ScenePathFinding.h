@@ -44,4 +44,6 @@ private:
 	std::vector<Node*> grid;
 	std::vector<Vector2D> floodFill;
 	std::vector<Vector2D> frontier;
+	std::vector<Vector2D> multipleTargets;
+	int numberOfTargets;
 };
