@@ -145,6 +145,7 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 				newTargetPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
 			multipleTargets.push_back(cell2pix(newTargetPosition));
 		}
+		ModifyGrid();
 		//Execute the finding algorithm here
 		floodFill.clear();
 		frontier.clear();
@@ -161,17 +162,17 @@ void ScenePathFinding::draw()
 	drawMaze();
 	drawCoin();
 
-
+	SDL_Rect square;
+	for (int i = 0; i < grid.size(); i++) {
+		square.x = grid[i]->GetPosition().x - CELL_SIZE / 2;
+		square.y = grid[i]->GetPosition().y - CELL_SIZE / 2;
+		square.w = square.h = CELL_SIZE;
+		SDL_SetRenderDrawColor(TheApp::Instance()->getRenderer(), (255 / 7) * (grid[i]->GetCost() - 1), 0, 0, 255);
+		SDL_RenderFillRect(TheApp::Instance()->getRenderer(), &square);
+	} 
 	if (draw_grid)
 	{
-		/*SDL_Rect square;
-		for (int i = 0; i < grid.size(); i++) {
-			square.x = grid[i]->GetPosition().x - CELL_SIZE / 2;
-			square.y = grid[i]->GetPosition().y - CELL_SIZE / 2;
-			square.w = square.h = CELL_SIZE + 1;
-			SDL_SetRenderDrawColor(TheApp::Instance()->getRenderer(), 0 + 70 * grid[i]->GetCost(), 0 + 70 * grid[i]->GetCost(), 0 + 70 * grid[i]->GetCost(), 255);
-			SDL_RenderFillRect(TheApp::Instance()->getRenderer(), &square);
-		}*/
+
 
 		SDL_SetRenderDrawColor(TheApp::Instance()->getRenderer(), 255, 255, 255, 127);
 		for (int i = 0; i < SRC_WIDTH; i+=CELL_SIZE)
@@ -460,4 +461,39 @@ void ScenePathFinding::CreateGrid(const std::vector<std::vector<int>>& maze) {
 	grid[grid.size() - 1]->AddNB(grid[2]);
 
 	delete[] leftWall;
+}
+void ScenePathFinding::ModifyGrid() {
+	if (modifyedNodes.size()) {
+		for (int i = 0; i < modifyedNodes.size(); i++) {
+			modifyedNodes[i]->SetCost(1);
+		}
+		modifyedNodes.clear();
+	}
+
+	for (int i = 0; i < 8; i++) {
+		int randomNode = rand() % grid.size();
+		grid[randomNode]->SetCost(8);
+		std::vector<Node*> NB1 = grid[randomNode]->GetNB();
+		modifyedNodes.push_back(grid[randomNode]);
+
+		for (int j = 0; j < NB1.size(); j++) {
+			NB1[j]->SetCost(6);
+			std::vector<Node*> NB2 = NB1[j]->GetNB();
+			modifyedNodes.push_back(NB1[j]);
+
+			for (int k = 0; k < NB2.size(); k++) {
+				if (NB2[k]->GetCost() == 1)
+					NB2[k]->SetCost(4);
+				std::vector<Node*> NB3 = NB2[k]->GetNB();
+				modifyedNodes.push_back(NB2[k]);
+
+				for (int w = 0; w < NB3.size(); w++) {
+					if(NB3[w]->GetCost() == 1)
+						NB3[w]->SetCost(2);
+					std::vector<Node*> NB4 = NB3[w]->GetNB();
+					modifyedNodes.push_back(NB3[w]);
+				}
+			}
+		}
+	}
 }

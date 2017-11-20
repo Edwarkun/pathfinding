@@ -38,6 +38,7 @@ private:
 	Vector2D pix2cell(Vector2D pix);
 	bool isValidCell(Vector2D cell);
 	void CreateGrid(const std::vector<std::vector<int>>& maze);
+	void ModifyGrid();
 
 
 
@@ -45,5 +46,6 @@ private:
 	std::vector<Vector2D> floodFill;
 	std::vector<Vector2D> frontier;
 	std::vector<Vector2D> multipleTargets;
+	std::vector<Node*> modifyedNodes;
 	int numberOfTargets;
 };

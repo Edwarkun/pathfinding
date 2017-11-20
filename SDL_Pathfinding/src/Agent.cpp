@@ -435,9 +435,12 @@ float Agent::heuristic(Node* fromN, Node* toN) {
 }
 
 float Agent::heuristicTunnel(Node* fromN, Node* toN) {
-	float distance = heuristic(fromN, toN);
-	if (distance > SRC_WIDTH / 2)
-		distance = SRC_WIDTH - distance;
+	float a = abs(toN->GetPosition().x - fromN->GetPosition().x);
+	if (a > SRC_WIDTH / 2)
+		a = SRC_WIDTH - a;
+	float b = abs(toN->GetPosition().y - fromN->GetPosition().y);
+	float distance = a + b;
+
 	return distance;
 
 }
