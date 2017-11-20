@@ -127,6 +127,11 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 
 		currentTarget = path.points[currentTargetIndex];
 		Vector2D steering_force = agents[0]->Behavior()->Seek(agents[0], currentTarget, dtime);
+		//Creating the "tunnel" effect
+		if ((agents[0]->getPosition() - currentTarget).Length() > 1000) {
+			steering_force.x = -steering_force.x;
+			steering_force.y = -steering_force.y;
+		}
 		agents[0]->update(steering_force, dtime, event);
 	} 
 	else
@@ -159,6 +164,15 @@ void ScenePathFinding::draw()
 
 	if (draw_grid)
 	{
+		/*SDL_Rect square;
+		for (int i = 0; i < grid.size(); i++) {
+			square.x = grid[i]->GetPosition().x - CELL_SIZE / 2;
+			square.y = grid[i]->GetPosition().y - CELL_SIZE / 2;
+			square.w = square.h = CELL_SIZE + 1;
+			SDL_SetRenderDrawColor(TheApp::Instance()->getRenderer(), 0 + 70 * grid[i]->GetCost(), 0 + 70 * grid[i]->GetCost(), 0 + 70 * grid[i]->GetCost(), 255);
+			SDL_RenderFillRect(TheApp::Instance()->getRenderer(), &square);
+		}*/
+
 		SDL_SetRenderDrawColor(TheApp::Instance()->getRenderer(), 255, 255, 255, 127);
 		for (int i = 0; i < SRC_WIDTH; i+=CELL_SIZE)
 		{
@@ -214,7 +228,8 @@ void ScenePathFinding::draw()
 	{
 		draw_circle(TheApp::Instance()->getRenderer(), (int)(path.points[i].x), (int)(path.points[i].y), 15, 255, 255, 0, 255);
 		if (i > 0)
-			SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), (int)(path.points[i - 1].x), (int)(path.points[i - 1].y), (int)(path.points[i].x), (int)(path.points[i].y));
+			if( (path.points[i - 1] - path.points[i]).Length() < 100)
+				SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), (int)(path.points[i - 1].x), (int)(path.points[i - 1].y), (int)(path.points[i].x), (int)(path.points[i].y));
 	}
 
 	draw_circle(TheApp::Instance()->getRenderer(), (int)currentTarget.x, (int)currentTarget.y, 15, 255, 0, 0, 255);
@@ -411,7 +426,7 @@ void ScenePathFinding::CreateGrid(const std::vector<std::vector<int>>& maze) {
 			}
 			else {
 				Node* newNode = new Node(Vector2D(offset + i * CELL_SIZE, offset + j * CELL_SIZE), maze[i][j]);
-				
+
 				if (leftWall[j]) { // if the left node was a wall we store the actual one it into a queue
 					leftWall[j] = false;
 					if(i != maze.size() - 1)
@@ -434,5 +449,15 @@ void ScenePathFinding::CreateGrid(const std::vector<std::vector<int>>& maze) {
 			}
 		}
 	}
+	//Build the "tunnel"
+	grid[0]->AddNB(grid[grid.size() - 3]);
+	grid[grid.size() - 3]->AddNB(grid[0]);
+
+	grid[1]->AddNB(grid[grid.size() - 2]);
+	grid[grid.size() - 2]->AddNB(grid[1]);
+
+	grid[2]->AddNB(grid[grid.size() - 1]);
+	grid[grid.size() - 1]->AddNB(grid[2]);
+
 	delete[] leftWall;
 }

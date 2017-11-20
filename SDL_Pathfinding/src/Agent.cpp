@@ -357,7 +357,7 @@ Path  Agent::FindPath(const std::vector<Node*>& grid, const Vector2D& startPosit
 					int newCost = costSoFar[current] + next->GetCost();
 					if (costSoFar.find(next) == costSoFar.end() || newCost < costSoFar[next]) {
 						costSoFar[next] = newCost;
-						float priority = newCost + heuristic(finish, next) / 32;
+						float priority = newCost + heuristicTunnel(finish, next) / 32;
 						newNodes.push_back(std::make_pair(priority, next));
 						cameFrom[next] = current;
 						floodFillDraw.push_back(next->GetPosition());
@@ -406,10 +406,10 @@ Path  Agent::FindMultiplePath(const std::vector<Node*>& grid, const Vector2D& st
 
 	for (int i = 0; i < targets.size() && targetsLeft.size(); i++) {
 		Node* bestTarget = targetsLeft[0];
-		float bestCost  = heuristic(start, targetsLeft[0]);
+		float bestCost  = heuristicTunnel(start, targetsLeft[0]);
 		int index = 0;
 		for (int j = 0; j < targetsLeft.size(); j++) {
-			float cost = heuristic(start, targetsLeft[j]);
+			float cost = heuristicTunnel(start, targetsLeft[j]);
 			if (cost < bestCost) {
 				bestCost = cost;
 				bestTarget = targetsLeft[j];
