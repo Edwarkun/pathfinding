@@ -7,23 +7,22 @@
 #include <queue>
 #include "Node.h"
 
-
-class ScenePathFinding :
+class SceneEnemies :
 	public Scene
 {
 public:
-	ScenePathFinding();
-	~ScenePathFinding();
+	SceneEnemies();
+	~SceneEnemies();
 	void update(float dtime, SDL_Event *event);
 	void draw();
 	const char* getTitle();
 private:
 	std::vector<Agent*> agents;
 
-	Vector2D coinPosition;
-	Vector2D currentTarget;
-	int currentTargetIndex;
-	Path path;
+	Vector2D coinPosition, enemTarget;
+	Vector2D currentTarget, currentTargetEnemies;
+	int currentTargetIndex, currentTargetEnemiesIndex;
+	Path path, pathEnemies;
 	int num_cell_x;
 	int num_cell_y;
 	bool draw_grid;
@@ -40,7 +39,7 @@ private:
 	bool isValidCell(Vector2D cell);
 	void CreateGrid(const std::vector<std::vector<int>>& maze);
 	void ModifyGrid();
-	
+
 
 
 	std::vector<Node*> grid;
