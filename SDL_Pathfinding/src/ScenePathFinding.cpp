@@ -11,6 +11,7 @@ ScenePathFinding::ScenePathFinding()
 	initMaze();
 	loadTextures("../res/maze.png", "../res/coin.png");
 
+
 	srand((unsigned int)time(NULL));
 
 	Agent *agent = new Agent;
@@ -30,21 +31,19 @@ ScenePathFinding::ScenePathFinding()
 	while ((!isValidCell(coinPosition)) || (Vector2D::Distance(coinPosition, rand_cell)<3)) 
 		coinPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
 
-	// set the multiple targets
-	numberOfTargets = 4;
-	for (int i = 0; i < numberOfTargets; i++) {
-		Vector2D newTargetPosition(-1, -1);
-		while ((!isValidCell(newTargetPosition)) || (Vector2D::Distance(newTargetPosition, rand_cell)<3))
-			newTargetPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
-		multipleTargets.push_back(cell2pix(newTargetPosition));
-	}
+
 	// PathFollowing next Target
 	currentTarget = Vector2D(agent->getPosition().x, agent->getPosition().y);
 	currentTargetIndex = -1;
 
 	//Execute the pathfinding algorithm
-	
-
+	sceneState = 0;
+	newSceneState = sceneState;
+	ModifyGrid();
+	info1 = new Text("", Vector2D(100, 30), TheApp::Instance()->getRenderer(), 30, false);
+	info2 = new Text("", Vector2D(100, 80), TheApp::Instance()->getRenderer(), 30, false);
+	info3 = new Text("", Vector2D(SRC_WIDTH / 2 + SRC_WIDTH / 4, 60), TheApp::Instance()->getRenderer(), 50, true);
+	timeElapsed = 0;
 }
 
 ScenePathFinding::~ScenePathFinding()
@@ -58,6 +57,9 @@ ScenePathFinding::~ScenePathFinding()
 	{
 		delete agents[i];
 	}
+	delete info1;
+	delete info2;
+	delete info3;
 }
 
 void ScenePathFinding::update(float dtime, SDL_Event *event)
@@ -71,6 +73,21 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 	case SDL_KEYDOWN:
 		if (event->key.keysym.scancode == SDL_SCANCODE_SPACE)
 			draw_grid = !draw_grid;
+		if (event->key.keysym.scancode == SDL_SCANCODE_Z) {
+			newSceneState = 0;
+		}
+		if (event->key.keysym.scancode == SDL_SCANCODE_X) {
+			newSceneState = 1;
+		}
+		if (event->key.keysym.scancode == SDL_SCANCODE_C) {
+			newSceneState = 2;
+		}
+		if (event->key.keysym.scancode == SDL_SCANCODE_V) {
+			newSceneState = 3;
+		}
+		if (event->key.keysym.scancode == SDL_SCANCODE_B) {
+			newSceneState = 4;
+		}
 		break;
 	case SDL_MOUSEMOTION:
 	case SDL_MOUSEBUTTONDOWN:
@@ -136,97 +153,77 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 	} 
 	else
 	{
-		/*agents[0]->update(Vector2D(0,0), dtime, event);
-		ModifyGrid();
-
-		//Reset the multiple path
-		multipleTargets.clear();
-		for (int i = 0; i < numberOfTargets; i++) {
-			Vector2D newTargetPosition(-1, -1);
-			while ((!isValidCell(newTargetPosition)) || (Vector2D::Distance(newTargetPosition, pix2cell(agents[0]->getPosition()))<3))
-				newTargetPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
-			multipleTargets.push_back(cell2pix(newTargetPosition));
+		if (newSceneState != sceneState) {
+			ModifyGrid();
+			sceneState = newSceneState;
 		}
-		//Execute the finding algorithm here
+		
+
+		agents[0]->update(Vector2D(0, 0), dtime, event);
+		
+
 		floodFill.clear();
-		frontier.clear();*/
-		switch (event->type) {
-		case SDL_KEYDOWN:
-			if (event->key.keysym.scancode == SDL_SCANCODE_Z) {
-				agents[0]->update(Vector2D(0, 0), dtime, event);
-				ModifyGrid();
-				//Execute the finding algorithm here
-				multipleTargets.clear();
-				floodFill.clear();
-				frontier.clear();
-				path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH, floodFill, frontier);
-			
+		frontier.clear();
+		auto start = std::chrono::high_resolution_clock::now();
+		switch (sceneState) {
+		case 0:
+			path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH, floodFill, frontier);
+			info3->SetText("Breadth First Search");
+			break;
+		case 1:
+			path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), DIJKSTRA, floodFill, frontier);
+			info3->SetText("DIJSKTRA");
+			break;
+		case 2:
+			path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), GREEDY_BFG, floodFill, frontier);
+			info3->SetText("GREEDY BFS");
+			break;
+		case 3:
+			path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), A_STAR, floodFill, frontier);
+			info3->SetText("A*");
+			break;
+		case 4:
+			numberOfTargets = 3 + rand() % 5;
+			multipleTargets.clear();
+			for (int i = 0; i < numberOfTargets; i++) {
+				Vector2D newTargetPosition(-1, -1);
+				while ((!isValidCell(newTargetPosition)) || (Vector2D::Distance(newTargetPosition, pix2cell(agents[0]->getPosition()))<3))
+					newTargetPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
+				multipleTargets.push_back(cell2pix(newTargetPosition));
 			}
-			if (event->key.keysym.scancode == SDL_SCANCODE_X) {
-				agents[0]->update(Vector2D(0, 0), dtime, event);
-				multipleTargets.clear();
-				ModifyGrid();
-
-				//Execute the finding algorithm here
-				floodFill.clear();
-				frontier.clear();
-				path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), DIJKSTRA, floodFill, frontier);
-				
-			}
-			if (event->key.keysym.scancode == SDL_SCANCODE_C) {
-				agents[0]->update(Vector2D(0, 0), dtime, event);
-				multipleTargets.clear();
-				ModifyGrid();
-				//Execute the finding algorithm here
-				floodFill.clear();
-				frontier.clear();
-				path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), GREEDY_BFG, floodFill, frontier);
-			
-			}
-			if (event->key.keysym.scancode == SDL_SCANCODE_V) {
-				agents[0]->update(Vector2D(0, 0), dtime, event);
-				ModifyGrid();
-
-				//Reset the multiple path
-				multipleTargets.clear();
-				for (int i = 0; i < numberOfTargets; i++) {
-					Vector2D newTargetPosition(-1, -1);
-					while ((!isValidCell(newTargetPosition)) || (Vector2D::Distance(newTargetPosition, pix2cell(agents[0]->getPosition()))<3))
-						newTargetPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
-					multipleTargets.push_back(cell2pix(newTargetPosition));
-				}
-				//Execute the finding algorithm here
-				floodFill.clear();
-				frontier.clear();
-				path = agents[0]->FindMultiplePath(grid, currentTarget, multipleTargets, floodFill, frontier);
-				
-				
-			}
-			if (event->key.keysym.scancode == SDL_SCANCODE_B) {
-				agents[0]->update(Vector2D(0, 0), dtime, event);
-				multipleTargets.clear();
-				ModifyGrid();
-
-				//Execute the finding algorithm here
-				floodFill.clear();
-				frontier.clear();
-				path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), A_STAR, floodFill, frontier);
-				
-			}
+			path = agents[0]->FindMultiplePath(grid, currentTarget, multipleTargets, floodFill, frontier);
+			multipleTargetsDraw = multipleTargets;
+			info3->SetText("Multiple Targets A*");
 			break;
 		}
+		auto finish = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float> elapsed = finish - start;
+
+		info1->SetText("Analyzed Nodes: " + std::to_string(floodFill.size() + frontier.size()));
+		info2->SetText("Elapsed Time: " + std::to_string(elapsed.count()).substr(0, 6));
+
 		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH, floodFill, frontier);
 		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), DIJKSTRA, floodFill, frontier);
 		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), GREEDY_BFG, floodFill, frontier);
 		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), A_STAR, floodFill, frontier);
 		//path = agents[0]->FindMultiplePath(grid, currentTarget, multipleTargets, floodFill, frontier);
 	}
+	int index = -1;
+	for (int i = 0; i < multipleTargetsDraw.size(); i++) {
+		Vector2D distance = agents[0]->getPosition() - multipleTargetsDraw[i];
+		if (distance.Length() < path.ARRIVAL_DISTANCE) {
+			index = i;
+		}
+	}
+	if (index != -1) {
+		multipleTargetsDraw.erase(multipleTargetsDraw.begin() + index);
+	}
 }
 
 void ScenePathFinding::draw()
 {
 	drawMaze();
-	drawCoin();
+
 
 	SDL_Rect square;
 	for (int i = 0; i < grid.size(); i++) {
@@ -258,9 +255,6 @@ void ScenePathFinding::draw()
 		draw_circle(TheApp::Instance()->getRenderer(), frontier[i].x, frontier[i].y, 15, 225, 15, 225, 255);
 	}
 	*/
-	for (int i = 0; i < multipleTargets.size(); i++) {
-		draw_circle(TheApp::Instance()->getRenderer(), multipleTargets[i].x, multipleTargets[i].y, 10, 255, 255, 255, 255);
-	}
 	//Grid drawing
 	/*
 	for (int i = 0; i < grid.size(); i++) {
@@ -300,8 +294,22 @@ void ScenePathFinding::draw()
 	}
 
 	draw_circle(TheApp::Instance()->getRenderer(), (int)currentTarget.x, (int)currentTarget.y, 15, 255, 0, 0, 255);
+	if (sceneState == 4) {
 
+		for (int i = 0; i < multipleTargets.size(); i++) {
+			draw_circle(TheApp::Instance()->getRenderer(), multipleTargets[i].x, multipleTargets[i].y, 10, 255, 255, 255, 255);
+		}
+
+		for (int i = 0; i < multipleTargetsDraw.size(); i++)
+			drawCoin(cell2pix(pix2cell(multipleTargetsDraw[i])));
+	}
+	else {
+		drawCoin(cell2pix(coinPosition));
+	}
 	agents[0]->draw();
+	info1->RenderText();
+	info2->RenderText();
+	info3->RenderText();
 }
 
 const char* ScenePathFinding::getTitle()
@@ -324,9 +332,8 @@ void ScenePathFinding::drawMaze()
 	}
 }
 
-void ScenePathFinding::drawCoin()
+void ScenePathFinding::drawCoin(const Vector2D& coin_coords)
 {
-	Vector2D coin_coords = cell2pix(coinPosition);
 	int offset = CELL_SIZE / 2;
 	SDL_Rect dstrect = {(int)coin_coords.x-offset, (int)coin_coords.y - offset, CELL_SIZE, CELL_SIZE};
 	SDL_RenderCopy(TheApp::Instance()->getRenderer(), coin_texture, NULL, &dstrect);

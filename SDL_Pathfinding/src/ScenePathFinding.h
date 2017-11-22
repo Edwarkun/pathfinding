@@ -6,6 +6,8 @@
 #include "Path.h"
 #include <queue>
 #include "Node.h"
+#include "Text.h"
+#include <chrono>
 
 
 class ScenePathFinding :
@@ -29,7 +31,7 @@ private:
 	bool draw_grid;
 	std::vector<SDL_Rect> maze_rects;
 	void drawMaze();
-	void drawCoin();
+	void drawCoin(const Vector2D&);
 	SDL_Texture *background_texture;
 	SDL_Texture *coin_texture;
 	void initMaze();
@@ -42,11 +44,17 @@ private:
 	void ModifyGrid();
 	
 
-
+	Text* info1;
+	Text* info2;
+	Text* info3;
+	float timeElapsed;
 	std::vector<Node*> grid;
 	std::vector<Vector2D> floodFill;
 	std::vector<Vector2D> frontier;
 	std::vector<Vector2D> multipleTargets;
+	std::vector<Vector2D>multipleTargetsDraw;
 	std::vector<Node*> modifyedNodes;
+	int sceneState;
+	int newSceneState;
 	int numberOfTargets;
 };

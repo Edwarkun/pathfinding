@@ -27,6 +27,11 @@ SDL_SimpleApp::SDL_SimpleApp()
 		cout << "IMG_Init: " << IMG_GetError() << endl;
 	}
 
+	if (TTF_Init() == -1)
+	{
+		cout << "SDL_ttf could not initialize! SDL_ttf Error: " << TTF_GetError() << std::endl;
+	}
+
 	window = SDL_CreateWindow("SDL Steering Behaviors",
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, win_width, win_height, 0);
 
