@@ -54,4 +54,5 @@ private:
 	std::vector<Node*> modifyedNodes;
 	int numberOfTargets;
 	bool newDynamicPath;
+	bool drawNodes;
 };

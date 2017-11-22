@@ -64,6 +64,7 @@ SceneEnemies::SceneEnemies()
 	info1 = new Text("", Vector2D(100, 30), TheApp::Instance()->getRenderer(), 30, false);
 	info2 = new Text("", Vector2D(100, 80), TheApp::Instance()->getRenderer(), 30, false);
 	info3 = new Text("Chase with avoidance A*", Vector2D(SRC_WIDTH / 2 + SRC_WIDTH / 4, 55), TheApp::Instance()->getRenderer(), 50, true);
+	drawNodes = false;
 }
 
 SceneEnemies::~SceneEnemies()
@@ -90,7 +91,11 @@ void SceneEnemies::update(float dtime, SDL_Event *event)
 	case SDL_KEYDOWN:
 		if (event->key.keysym.scancode == SDL_SCANCODE_SPACE)
 			draw_grid = !draw_grid;
+		if (event->key.keysym.scancode == SDL_SCANCODE_A) {
+			drawNodes = !drawNodes;
+		}
 		break;
+
 	}
 	if ((currentTargetIndex == -1) && (path.points.size()>0))
 		currentTargetIndex = 0;
@@ -274,7 +279,14 @@ void SceneEnemies::draw()
 			SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), 0, j, SRC_WIDTH, j);
 		}
 	}
-
+	if (drawNodes) {
+		for (int i = 0; i < floodFill.size(); i++) {
+			draw_circle(TheApp::Instance()->getRenderer(), floodFill[i].x, floodFill[i].y, 15, 15, 255, 255, 255);
+		}
+		for (int i = 0; i < frontier.size(); i++) {
+			draw_circle(TheApp::Instance()->getRenderer(), frontier[i].x, frontier[i].y, 15, 225, 15, 225, 255);
+		}
+	}
 	for (int i = 0; i < multipleTargets.size(); i++) {
 		draw_circle(TheApp::Instance()->getRenderer(), multipleTargets[i].x, multipleTargets[i].y, 10, 255, 255, 255, 255);
 	}

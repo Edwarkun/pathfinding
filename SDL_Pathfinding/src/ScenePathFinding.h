@@ -57,4 +57,5 @@ private:
 	int sceneState;
 	int newSceneState;
 	int numberOfTargets;
+	bool drawNodes;
 };
