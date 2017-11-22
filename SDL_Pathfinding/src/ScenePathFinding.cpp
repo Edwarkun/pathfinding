@@ -75,19 +75,33 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 			draw_grid = !draw_grid;
 		if (event->key.keysym.scancode == SDL_SCANCODE_Z) {
 			newSceneState = 0;
+			path.points.clear();
+			currentTargetIndex = -1;
 		}
 		if (event->key.keysym.scancode == SDL_SCANCODE_X) {
 			newSceneState = 1;
+			path.points.clear();
+			currentTargetIndex = -1;
 		}
 		if (event->key.keysym.scancode == SDL_SCANCODE_C) {
 			newSceneState = 2;
+			path.points.clear();
+			currentTargetIndex = -1;
 		}
 		if (event->key.keysym.scancode == SDL_SCANCODE_V) {
 			newSceneState = 3;
+			path.points.clear();
+			currentTargetIndex = -1;
 		}
 		if (event->key.keysym.scancode == SDL_SCANCODE_B) {
 			newSceneState = 4;
+			path.points.clear();
+			currentTargetIndex = -1;
 		}
+		if (event->key.keysym.scancode == SDL_SCANCODE_G) {
+			ModifyGrid();
+		}
+
 		break;
 	case SDL_MOUSEMOTION:
 	case SDL_MOUSEBUTTONDOWN:
@@ -154,7 +168,6 @@ void ScenePathFinding::update(float dtime, SDL_Event *event)
 	else
 	{
 		if (newSceneState != sceneState) {
-			ModifyGrid();
 			sceneState = newSceneState;
 		}
 		
@@ -230,13 +243,11 @@ void ScenePathFinding::draw()
 		square.x = grid[i]->GetPosition().x - CELL_SIZE / 2;
 		square.y = grid[i]->GetPosition().y - CELL_SIZE / 2;
 		square.w = square.h = CELL_SIZE;
-		SDL_SetRenderDrawColor(TheApp::Instance()->getRenderer(), (255 / 7) * (grid[i]->GetCost() - 1), 0, 0, 255);
+		SDL_SetRenderDrawColor(TheApp::Instance()->getRenderer(), (255 / 50) * (grid[i]->GetCost() - 1), 0, 0, 255);
 		SDL_RenderFillRect(TheApp::Instance()->getRenderer(), &square);
 	} 
 	if (draw_grid)
 	{
-
-
 		SDL_SetRenderDrawColor(TheApp::Instance()->getRenderer(), 255, 255, 255, 127);
 		for (int i = 0; i < SRC_WIDTH; i+=CELL_SIZE)
 		{
@@ -299,9 +310,9 @@ void ScenePathFinding::draw()
 		for (int i = 0; i < multipleTargets.size(); i++) {
 			draw_circle(TheApp::Instance()->getRenderer(), multipleTargets[i].x, multipleTargets[i].y, 10, 255, 255, 255, 255);
 		}
-
 		for (int i = 0; i < multipleTargetsDraw.size(); i++)
 			drawCoin(cell2pix(pix2cell(multipleTargetsDraw[i])));
+
 	}
 	else {
 		drawCoin(cell2pix(coinPosition));
@@ -544,26 +555,26 @@ void ScenePathFinding::ModifyGrid() {
 		modifyedNodes.clear();
 	}
 
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < 16; i++) {
 		int randomNode = rand() % grid.size();
-		grid[randomNode]->SetCost(8);
+		grid[randomNode]->SetCost(50);
 		std::vector<Node*> NB1 = grid[randomNode]->GetNB();
 		modifyedNodes.push_back(grid[randomNode]);
 
 		for (int j = 0; j < NB1.size(); j++) {
-			NB1[j]->SetCost(6);
+			NB1[j]->SetCost(40);
 			std::vector<Node*> NB2 = NB1[j]->GetNB();
 			modifyedNodes.push_back(NB1[j]);
 
 			for (int k = 0; k < NB2.size(); k++) {
 				if (NB2[k]->GetCost() == 1)
-					NB2[k]->SetCost(4);
+					NB2[k]->SetCost(30);
 				std::vector<Node*> NB3 = NB2[k]->GetNB();
 				modifyedNodes.push_back(NB2[k]);
 
 				for (int w = 0; w < NB3.size(); w++) {
 					if(NB3[w]->GetCost() == 1)
-						NB3[w]->SetCost(2);
+						NB3[w]->SetCost(20);
 					std::vector<Node*> NB4 = NB3[w]->GetNB();
 					modifyedNodes.push_back(NB3[w]);
 				}

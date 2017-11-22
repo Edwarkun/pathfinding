@@ -12,9 +12,7 @@ centered(ctr){
 }
 
 Text::~Text() {
-	//Destroy surface and texture
-	SDL_DestroyTexture(texture);
-	SDL_FreeSurface(surface);
+
 }
 
 void Text::RenderText() {

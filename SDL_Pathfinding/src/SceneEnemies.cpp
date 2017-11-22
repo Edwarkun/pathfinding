@@ -61,7 +61,9 @@ SceneEnemies::SceneEnemies()
 	//PathFollowing EnemieNextTarget
 	currentTargetEnemies = Vector2D(enemie->getPosition().x, enemie->getPosition().y);
 	currentTargetEnemiesIndex = -1;
-
+	info1 = new Text("", Vector2D(100, 30), TheApp::Instance()->getRenderer(), 30, false);
+	info2 = new Text("", Vector2D(100, 80), TheApp::Instance()->getRenderer(), 30, false);
+	info3 = new Text("Chase with avoidance A*", Vector2D(SRC_WIDTH / 2 + SRC_WIDTH / 4, 55), TheApp::Instance()->getRenderer(), 50, true);
 }
 
 SceneEnemies::~SceneEnemies()
@@ -92,9 +94,10 @@ void SceneEnemies::update(float dtime, SDL_Event *event)
 	}
 	if ((currentTargetIndex == -1) && (path.points.size()>0))
 		currentTargetIndex = 0;
-	//enem
 
-	
+
+	newDynamicPath = false;
+
 	if (currentTargetIndex >= 0)
 	{
 		float dist = Vector2D::Distance(agents[0]->getPosition(), path.points[currentTargetIndex]);
@@ -124,45 +127,69 @@ void SceneEnemies::update(float dtime, SDL_Event *event)
 				return;
 			}
 			currentTargetIndex++;
+			floodFill.clear();
+			frontier.clear();
+			Vector2D startPosition = path.points[currentTargetIndex];
+			path.points.clear();
+			auto start = std::chrono::high_resolution_clock::now();
+			path = agents[0]->FindMultiplePath(grid, startPosition, remainingTargets, floodFill, frontier);
+			auto finish = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<float> elapsed = finish - start;
 
+			info1->SetText("Analyzed Nodes: " + std::to_string(floodFill.size() + frontier.size()));
+			info2->SetText("Elapsed Time: " + std::to_string(elapsed.count()).substr(0, 6));
+
+			currentTargetIndex = -1;
+			newDynamicPath = true;
 		}
-
-		currentTarget = path.points[currentTargetIndex];
-		Vector2D steering_force = agents[0]->Behavior()->Seek(agents[0], currentTarget, dtime);
-		//Creating the "tunnel" effect
-		if ((agents[0]->getPosition() - currentTarget).Length() > 1000) {
-			steering_force.x = -steering_force.x;
-			steering_force.y = -steering_force.y;
+		if (!newDynamicPath) {
+			currentTarget = path.points[currentTargetIndex];
+			Vector2D steering_force = agents[0]->Behavior()->Seek(agents[0], currentTarget, dtime);
+			//Creating the "tunnel" effect
+			if ((agents[0]->getPosition() - currentTarget).Length() > 1000) {
+				steering_force.x = -steering_force.x;
+				steering_force.y = -steering_force.y;
+			}
+			agents[0]->update(steering_force, dtime, event);
 		}
-
-		agents[0]->update(steering_force, dtime, event);
-
 
 	}//line code 108
 	else
 	{
-		agents[0]->update(Vector2D(0, 0), dtime, event);
-	
 		
+		agents[0]->update(Vector2D(0, 0), dtime, event);
 		//Reset the multiple path
 		multipleTargets.clear();
+		remainingTargets.clear();
 		for (int i = 0; i < numberOfTargets; i++) {
 			Vector2D newTargetPosition(-1, -1);
 			while ((!isValidCell(newTargetPosition)) || (Vector2D::Distance(newTargetPosition, pix2cell(agents[0]->getPosition()))<3))
 				newTargetPosition = Vector2D((float)(rand() % num_cell_x), (float)(rand() % num_cell_y));
 			multipleTargets.push_back(cell2pix(newTargetPosition));
 		}
-		ModifyGrid();
+		remainingTargets = multipleTargets;
 		//Execute the finding algorithm here
 		floodFill.clear();
 		frontier.clear();
-		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), BREATH_FIRST_SEARCH, floodFill, frontier);
-		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), DIJKSTRA, floodFill, frontier);
-		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), GREEDY_BFG, floodFill, frontier);
-		//path = agents[0]->FindPath(grid, currentTarget, cell2pix(coinPosition), A_STAR, floodFill, frontier);
+		auto start = std::chrono::high_resolution_clock::now();
 		path = agents[0]->FindMultiplePath(grid, currentTarget, multipleTargets, floodFill, frontier);
+		auto finish = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float> elapsed = finish - start;
+
+		info1->SetText("Analyzed Nodes: " + std::to_string(floodFill.size() + frontier.size()));
+		info2->SetText("Elapsed Time: " + std::to_string(elapsed.count()).substr(0, 6));
 	
 	}
+
+	int index = -1;
+	for (int i = 0; i < remainingTargets.size(); i++) {
+		Vector2D distance = agents[0]->getPosition() - remainingTargets[i];
+		if (distance.Length() < path.ARRIVAL_DISTANCE) {
+			index = i;
+		}
+	}
+	if (index != -1)
+		remainingTargets.erase(remainingTargets.begin() + index);
 
 	/*------------ENEMIE PATH---------------*/
 	if ((currentTargetEnemiesIndex == -1) && (pathEnemies.points.size()>0))
@@ -197,7 +224,7 @@ void SceneEnemies::update(float dtime, SDL_Event *event)
 				return;
 			}
 			currentTargetEnemiesIndex++;
-
+			ModifyGrid(pathEnemies.points[currentTargetEnemiesIndex]);
 		}
 
 		currentTargetEnemies = pathEnemies.points[currentTargetEnemiesIndex];
@@ -224,7 +251,6 @@ void SceneEnemies::update(float dtime, SDL_Event *event)
 void SceneEnemies::draw()
 {
 	drawMaze();
-	drawCoin();
 
 	SDL_Rect square;
 	for (int i = 0; i < grid.size(); i++) {
@@ -269,10 +295,16 @@ void SceneEnemies::draw()
 				SDL_RenderDrawLine(TheApp::Instance()->getRenderer(), (int)(pathEnemies.points[i - 1].x), (int)(pathEnemies.points[i - 1].y), (int)(pathEnemies.points[i].x), (int)(pathEnemies.points[i].y));
 	}
 
+	for (int i = 0; i < remainingTargets.size(); i++)
+		drawCoin(cell2pix(pix2cell(remainingTargets[i])));
+
 	draw_circle(TheApp::Instance()->getRenderer(), (int)currentTarget.x, (int)currentTarget.y, 15, 255, 0, 0, 255);
 	draw_circle(TheApp::Instance()->getRenderer(), (int)(cell2pix(enemTarget).x), (int)(cell2pix(enemTarget).y), 10, 100, 100, 100, 255);
 	agents[0]->draw();
 	agents[1]->draw();
+	info1->RenderText();
+	info2->RenderText();
+	info3->RenderText();
 }
 
 const char* SceneEnemies::getTitle()
@@ -295,9 +327,8 @@ void SceneEnemies::drawMaze()
 	}
 }
 
-void SceneEnemies::drawCoin()
+void SceneEnemies::drawCoin(const Vector2D& coin_coords)
 {
-	Vector2D coin_coords = cell2pix(coinPosition);
 	int offset = CELL_SIZE / 2;
 	SDL_Rect dstrect = { (int)coin_coords.x - offset, (int)coin_coords.y - offset, CELL_SIZE, CELL_SIZE };
 	SDL_RenderCopy(TheApp::Instance()->getRenderer(), coin_texture, NULL, &dstrect);
@@ -500,7 +531,15 @@ void SceneEnemies::CreateGrid(const std::vector<std::vector<int>>& maze) {
 	delete[] leftWall;
 }
 
-void SceneEnemies::ModifyGrid() {
+void SceneEnemies::ModifyGrid(const Vector2D& Position) {
+	Node* targetNode = nullptr;
+	bool found = false;
+	for (int i = 0; i < grid.size() && !found; i++) {
+		if (grid[i]->GetPosition() == Position) {
+			targetNode = grid[i];
+			found = true;
+		}
+	}
 	if (modifyedNodes.size()) {
 		for (int i = 0; i < modifyedNodes.size(); i++) {
 			modifyedNodes[i]->SetCost(1);
@@ -509,26 +548,39 @@ void SceneEnemies::ModifyGrid() {
 	}
 
 	for (int i = 0; i < 8; i++) {
-		int randomNode = rand() % grid.size();
-		grid[randomNode]->SetCost(8);
-		std::vector<Node*> NB1 = grid[randomNode]->GetNB();
-		modifyedNodes.push_back(grid[randomNode]);
+		targetNode->SetCost(50);
+		std::vector<Node*> NB1 = targetNode->GetNB();
+		modifyedNodes.push_back(targetNode);
 
 		for (int j = 0; j < NB1.size(); j++) {
-			NB1[j]->SetCost(6);
+			NB1[j]->SetCost(50);
 			std::vector<Node*> NB2 = NB1[j]->GetNB();
 			modifyedNodes.push_back(NB1[j]);
 
 			for (int k = 0; k < NB2.size(); k++) {
 				if (NB2[k]->GetCost() == 1)
-					NB2[k]->SetCost(4);
+					NB2[k]->SetCost(50);
 				std::vector<Node*> NB3 = NB2[k]->GetNB();
 				modifyedNodes.push_back(NB2[k]);
 
 				for (int w = 0; w < NB3.size(); w++) {
 					if (NB3[w]->GetCost() == 1)
-						NB3[w]->SetCost(2);
+						NB3[w]->SetCost(50);
 					std::vector<Node*> NB4 = NB3[w]->GetNB();
+					modifyedNodes.push_back(NB3[w]);
+
+					for (int r = 0; r < NB4.size(); r++) {
+						if (NB4[r]->GetCost() == 1)
+							NB4[r]->SetCost(50);
+						std::vector<Node*> NB5 = NB4[r]->GetNB();
+						modifyedNodes.push_back(NB4[r]);
+
+						for (int t = 0; t < NB5.size(); t++) {
+							if(NB5[t]->GetCost() == 1)
+								NB5[t]->SetCost(50);
+							modifyedNodes.push_back(NB5[t]);
+						}
+					}
 					modifyedNodes.push_back(NB3[w]);
 				}
 			}
